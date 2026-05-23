@@ -14,6 +14,11 @@ const openWhatsApp = (productName, productCode) => {
 const SAN = "'PingFang SC','Microsoft YaHei','Helvetica Neue',Arial,sans-serif";
 const SER = "Georgia,'Times New Roman',serif";
 
+const CAT_EN = {
+  "串珠": "Beads", "吊坠配件": "Charms",
+  "链条线材": "Chains & Wire", "五金配件": "Findings", "工具": "Tools",
+};
+
 function parseCSV(text) {
   const lines = text.trim().split("\n");
   const headers = lines[0].split(",").map(h => h.replace(/^"|"$/g, "").trim());
@@ -33,10 +38,19 @@ function parseCSV(text) {
   }).filter(r => r.id);
 }
 
-function CatIcon({ cat, color }) {
+// Convert Google Drive share link to direct image URL
+function driveImgUrl(url) {
+  if (!url) return null;
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  return url;
+}
+
+function CatIcon({ cat, color, size = 52 }) {
   const c = color || "#c8956c";
+  const s = size;
   if (cat === "串珠") return (
-    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+    <svg width={s} height={s} viewBox="0 0 52 52" fill="none">
       {[8,18,28,38,46].map((x,i)=>(
         <circle key={i} cx={x} cy="26" r={i===2?8:i===1||i===3?6:4} fill={c} opacity={0.15+i*0.12}/>
       ))}
@@ -44,14 +58,14 @@ function CatIcon({ cat, color }) {
     </svg>
   );
   if (cat === "吊坠配件") return (
-    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+    <svg width={s} height={s} viewBox="0 0 52 52" fill="none">
       <circle cx="26" cy="14" r="5" stroke={c} strokeWidth="1.5" fill="none"/>
       <line x1="26" y1="19" x2="26" y2="28" stroke={c} strokeWidth="1.5"/>
       <path d="M16 38 Q26 28 36 38 Q26 48 16 38Z" fill={c} opacity="0.7"/>
     </svg>
   );
   if (cat === "链条线材") return (
-    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+    <svg width={s} height={s} viewBox="0 0 52 52" fill="none">
       {[0,1,2,3].map(i=>(
         <ellipse key={i} cx={10+i*10} cy="26" rx="5" ry="3" stroke={c} strokeWidth="1.5" fill="none" opacity={0.5+i*0.1}/>
       ))}
@@ -59,18 +73,18 @@ function CatIcon({ cat, color }) {
     </svg>
   );
   if (cat === "五金配件") return (
-    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+    <svg width={s} height={s} viewBox="0 0 52 52" fill="none">
       <circle cx="20" cy="26" r="10" stroke={c} strokeWidth="2" fill="none"/>
       <path d="M30 26 Q38 18 44 20 Q46 26 44 32 Q38 34 30 26Z" fill={c} opacity="0.6"/>
     </svg>
   );
   if (cat === "工具") return (
-    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+    <svg width={s} height={s} viewBox="0 0 52 52" fill="none">
       <rect x="8" y="22" width="28" height="8" rx="4" fill={c} opacity="0.6"/>
       <rect x="34" y="20" width="10" height="12" rx="3" fill={c} opacity="0.85"/>
     </svg>
   );
-  return <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="18" fill={c} opacity="0.3"/></svg>;
+  return <svg width={s} height={s} viewBox="0 0 52 52"><circle cx="26" cy="26" r="18" fill={c} opacity="0.3"/></svg>;
 }
 
 function WhatsAppIcon({ size = 20, color = "#fff" }) {
@@ -82,161 +96,197 @@ function WhatsAppIcon({ size = 20, color = "#fff" }) {
   );
 }
 
-// Category English label mapping
-const CAT_EN = {
-  "串珠": "Beads",
-  "吊坠配件": "Charms",
-  "链条线材": "Chains & Wire",
-  "五金配件": "Findings",
-  "工具": "Tools",
-};
+// ── Product Detail Page ───────────────────────────────────────────────────────
+function DetailPage({ p, onBack }) {
+  const [imgError, setImgError] = useState(false);
+  const imgUrl = driveImgUrl(p.image);
+  const catEn = CAT_EN[p.cat] || p.cat;
 
-// Detail Modal
-function DetailModal({ p, onClose }) {
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0, zIndex: 300,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "20px",
-        backdropFilter: "blur(4px)",
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: "#fff", borderRadius: "20px",
-          maxWidth: "600px", width: "100%",
-          maxHeight: "88vh", overflowY: "auto",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
-          animation: "modalIn 0.28s ease",
-        }}
-      >
-        {/* Image placeholder */}
-        <div style={{
-          height: "240px",
-          background: `linear-gradient(135deg, ${p.color || "#e8c4a0"}66 0%, ${p.color || "#e8c4a0"}22 100%)`,
-          borderRadius: "20px 20px 0 0",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          position: "relative",
+    <div style={{ minHeight: "100vh", background: "#faf8f5" }}>
+      {/* Back bar */}
+      <div style={{
+        background: "#fff", borderBottom: "1px solid #ede8e0",
+        padding: "0 24px", height: "52px",
+        display: "flex", alignItems: "center", gap: "12px",
+        position: "sticky", top: "64px", zIndex: 50,
+      }}>
+        <button onClick={onBack} style={{
+          background: "none", border: "none", cursor: "pointer",
+          fontFamily: SAN, fontSize: "13px", color: "#7a6858",
+          display: "flex", alignItems: "center", gap: "6px", fontWeight: 600,
+          padding: "6px 0",
         }}>
-          <div style={{ transform: "scale(2.2)", opacity: 0.8 }}>
-            <CatIcon cat={p.cat} color={p.color} />
-          </div>
-          {p.tag && (
-            <span style={{
-              position: "absolute", top: "16px", left: "16px",
-              background: p.tag === "新品" ? "#7bbfac" : "#c8956c",
-              color: "#fff", fontSize: "11px", fontFamily: SAN,
-              fontWeight: 700, letterSpacing: "1px",
-              padding: "4px 12px", borderRadius: "20px",
-            }}>{p.tag === "新品" ? "NEW" : "BESTSELLER"}</span>
-          )}
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            style={{
-              position: "absolute", top: "16px", right: "16px",
-              background: "rgba(255,255,255,0.9)", border: "none",
-              borderRadius: "50%", width: "36px", height: "36px",
-              cursor: "pointer", fontSize: "18px", color: "#666",
+          ← Back to Shop
+        </button>
+        <span style={{ color: "#ddd" }}>|</span>
+        <span style={{ fontFamily: SAN, fontSize: "12px", color: "#c8956c", letterSpacing: "1px" }}>
+          {catEn} / {p.id}
+        </span>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "40px 24px 80px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "start" }}>
+
+          {/* LEFT — Image */}
+          <div>
+            <div style={{
+              borderRadius: "20px", overflow: "hidden",
+              background: `linear-gradient(135deg, ${p.color || "#e8c4a0"}44 0%, ${p.color || "#e8c4a0"}18 100%)`,
+              aspectRatio: "1/1",
               display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >×</button>
-          {/* Image placeholder label */}
-          <div style={{
-            position: "absolute", bottom: "12px", right: "16px",
-            fontFamily: SAN, fontSize: "10px", color: "rgba(100,80,60,0.5)",
-            letterSpacing: "1px",
-          }}>PRODUCT IMAGE COMING SOON</div>
-        </div>
-
-        {/* Content */}
-        <div style={{ padding: "28px 32px 32px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-            <div>
-              <span style={{ fontFamily: SAN, fontSize: "10px", letterSpacing: "3px", color: "#c8956c", fontWeight: 700 }}>
-                {p.id} · {CAT_EN[p.cat] || p.cat}
-              </span>
-              <h2 style={{ fontFamily: SER, fontSize: "22px", fontWeight: 700, color: "#2a1f18", marginTop: "6px", lineHeight: 1.3 }}>
-                {p.en}
-              </h2>
-              <p style={{ fontFamily: SAN, fontSize: "13px", color: "#a08878", marginTop: "4px" }}>{p.name}</p>
-            </div>
-            <div style={{ textAlign: "right", flexShrink: 0, marginLeft: "16px" }}>
-              <div style={{ fontFamily: SER, fontSize: "26px", fontWeight: 700, color: "#c8956c", letterSpacing: "-0.5px" }}>{p.price}</div>
-              <div style={{ fontFamily: SAN, fontSize: "11px", color: "#b0a090" }}>{p.unit}</div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div style={{ height: "1px", background: "#f0ebe2", margin: "20px 0" }}/>
-
-          {/* Detail description */}
-          {p.detail_desc && (
-            <div style={{ marginBottom: "20px" }}>
-              <p style={{ fontFamily: SAN, fontSize: "13px", color: "#6a5848", lineHeight: 1.9 }}>{p.detail_desc}</p>
-            </div>
-          )}
-
-          {/* Specs grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "24px" }}>
-            {[
-              { label: "Material", value: p.material },
-              { label: "Size", value: p.size },
-              { label: "Colour Options", value: p.color_options },
-              { label: "Category", value: CAT_EN[p.cat] || p.cat },
-            ].map(spec => spec.value ? (
-              <div key={spec.label} style={{
-                background: "#faf8f5", borderRadius: "10px", padding: "12px 16px",
-                border: "1px solid #f0ebe2",
-              }}>
-                <div style={{ fontFamily: SAN, fontSize: "10px", letterSpacing: "2px", color: "#c8956c", fontWeight: 700, marginBottom: "4px" }}>
-                  {spec.label.toUpperCase()}
+              position: "relative", border: "1.5px solid #ede8e0",
+            }}>
+              {imgUrl && !imgError ? (
+                <img
+                  src={imgUrl}
+                  alt={p.en}
+                  onError={() => setImgError(true)}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "18px" }}
+                />
+              ) : (
+                <div style={{ textAlign: "center", padding: "40px" }}>
+                  <div style={{ transform: "scale(3)", marginBottom: "32px", opacity: 0.6 }}>
+                    <CatIcon cat={p.cat} color={p.color} size={52} />
+                  </div>
+                  <p style={{ fontFamily: SAN, fontSize: "11px", color: "#b0a090", letterSpacing: "2px", marginTop: "40px" }}>
+                    PRODUCT IMAGE COMING SOON
+                  </p>
                 </div>
-                <div style={{ fontFamily: SAN, fontSize: "13px", color: "#2a1f18", fontWeight: 500 }}>{spec.value}</div>
+              )}
+              {p.tag && (
+                <span style={{
+                  position: "absolute", top: "16px", left: "16px",
+                  background: p.tag === "新品" ? "#7bbfac" : "#c8956c",
+                  color: "#fff", fontSize: "11px", fontFamily: SAN,
+                  fontWeight: 700, letterSpacing: "2px",
+                  padding: "5px 14px", borderRadius: "20px",
+                }}>{p.tag === "新品" ? "NEW" : "BESTSELLER"}</span>
+              )}
+            </div>
+
+            {/* Placeholder thumbnails */}
+            <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+              {[1,2,3].map(i => (
+                <div key={i} style={{
+                  width: "80px", height: "80px", borderRadius: "10px",
+                  background: `linear-gradient(135deg, ${p.color || "#e8c4a0"}33, ${p.color || "#e8c4a0"}11)`,
+                  border: i===1 ? `2px solid #c8956c` : "1.5px solid #ede8e0",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", flexShrink: 0,
+                }}>
+                  <div style={{ opacity: 0.4, transform: "scale(0.7)" }}>
+                    <CatIcon cat={p.cat} color={p.color} size={40}/>
+                  </div>
+                </div>
+              ))}
+              <div style={{
+                width: "80px", height: "80px", borderRadius: "10px",
+                background: "#f5f0ea", border: "1.5px dashed #ddd0c0",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <span style={{ fontFamily: SAN, fontSize: "9px", color: "#b0a090", textAlign: "center", letterSpacing: "1px" }}>MORE<br/>SOON</span>
               </div>
-            ) : null)}
+            </div>
           </div>
 
-          {/* WhatsApp button */}
-          <button
-            onClick={() => openWhatsApp(p.name, p.id)}
-            style={{
-              width: "100%", padding: "14px 0",
-              background: "#25D366", color: "#fff",
-              border: "none", borderRadius: "12px",
-              fontFamily: SAN, fontWeight: 700, fontSize: "15px",
-              cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
-              boxShadow: "0 4px 16px rgba(37,211,102,0.3)",
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={e=>e.currentTarget.style.background="#1fb85a"}
-            onMouseLeave={e=>e.currentTarget.style.background="#25D366"}
-          >
-            <WhatsAppIcon size={18} color="#fff"/>
-            Order via WhatsApp
-          </button>
+          {/* RIGHT — Info */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+            <span style={{ fontFamily: SAN, fontSize: "10px", letterSpacing: "3px", color: "#c8956c", fontWeight: 700 }}>
+              {p.id} · {catEn}
+            </span>
+            <h1 style={{ fontFamily: SER, fontSize: "28px", fontWeight: 700, color: "#2a1f18", lineHeight: 1.3, marginTop: "10px" }}>
+              {p.en}
+            </h1>
+            <p style={{ fontFamily: SAN, fontSize: "13px", color: "#a08878", marginTop: "4px" }}>{p.name}</p>
 
-          <p style={{ fontFamily: SAN, fontSize: "11px", color: "#b0a090", textAlign: "center", marginTop: "12px" }}>
-            Click to chat with us directly on WhatsApp
-          </p>
+            {/* Price */}
+            <div style={{
+              display: "flex", alignItems: "baseline", gap: "6px",
+              margin: "20px 0", padding: "16px 20px",
+              background: "#fff8f2", borderRadius: "12px",
+              border: "1.5px solid #f0e0d0",
+            }}>
+              <span style={{ fontFamily: SER, fontSize: "32px", fontWeight: 700, color: "#c8956c", letterSpacing: "-1px" }}>{p.price}</span>
+              <span style={{ fontFamily: SAN, fontSize: "13px", color: "#b0a090" }}>{p.unit}</span>
+            </div>
+
+            {/* Short desc */}
+            <p style={{ fontFamily: SAN, fontSize: "14px", color: "#6a5848", lineHeight: 1.9, marginBottom: "20px" }}>
+              {p.detail_desc || p.desc}
+            </p>
+
+            {/* Specs */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "24px" }}>
+              {[
+                { icon: "🧪", label: "Material", value: p.material },
+                { icon: "📐", label: "Size", value: p.size },
+                { icon: "🎨", label: "Colour Options", value: p.color_options },
+                { icon: "📦", label: "Category", value: catEn },
+              ].map(spec => spec.value ? (
+                <div key={spec.label} style={{
+                  background: "#fff", borderRadius: "12px",
+                  padding: "14px 16px", border: "1.5px solid #ede8e0",
+                }}>
+                  <div style={{ fontFamily: SAN, fontSize: "10px", letterSpacing: "2px", color: "#c8956c", fontWeight: 700, marginBottom: "5px" }}>
+                    {spec.icon} {spec.label.toUpperCase()}
+                  </div>
+                  <div style={{ fontFamily: SAN, fontSize: "13px", color: "#2a1f18", fontWeight: 500, lineHeight: 1.4 }}>{spec.value}</div>
+                </div>
+              ) : null)}
+            </div>
+
+            {/* WhatsApp CTA */}
+            <button
+              onClick={() => openWhatsApp(p.en, p.id)}
+              style={{
+                width: "100%", padding: "16px 0",
+                background: "#25D366", color: "#fff",
+                border: "none", borderRadius: "14px",
+                fontFamily: SAN, fontWeight: 700, fontSize: "16px",
+                cursor: "pointer", letterSpacing: "0.5px",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                boxShadow: "0 6px 20px rgba(37,211,102,0.3)",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={e=>{ e.currentTarget.style.background="#1fb85a"; e.currentTarget.style.transform="translateY(-2px)"; }}
+              onMouseLeave={e=>{ e.currentTarget.style.background="#25D366"; e.currentTarget.style.transform="translateY(0)"; }}
+            >
+              <WhatsAppIcon size={20} color="#fff"/>
+              Order via WhatsApp
+            </button>
+
+            <p style={{ fontFamily: SAN, fontSize: "11px", color: "#b0a090", textAlign: "center", marginTop: "10px", letterSpacing: "0.5px" }}>
+              💬 Chat with us directly · Fast response guaranteed
+            </p>
+
+            {/* Trust badges */}
+            <div style={{ display: "flex", gap: "10px", marginTop: "20px", flexWrap: "wrap" }}>
+              {["🌍 Worldwide Shipping","📦 Retail & Wholesale","✨ Quality Guaranteed"].map(b => (
+                <span key={b} style={{
+                  fontFamily: SAN, fontSize: "11px", color: "#8a7868",
+                  background: "#f5f0ea", borderRadius: "20px",
+                  padding: "5px 12px", border: "1px solid #ede8e0",
+                }}>{b}</span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// ── Product Card ──────────────────────────────────────────────────────────────
 function ProductCard({ p, idx, onClick }) {
   const [hovered, setHovered] = useState(false);
+  const imgUrl = driveImgUrl(p.image);
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -246,66 +296,73 @@ function ProductCard({ p, idx, onClick }) {
         background: "#fff",
         border: `1.5px solid ${hovered ? "#c8956c" : "#ede8e0"}`,
         borderRadius: "16px", overflow: "hidden",
-        transition: "border-color 0.28s, box-shadow 0.28s, transform 0.28s",
+        transition: "all 0.28s",
         boxShadow: hovered ? "0 8px 32px rgba(200,149,108,0.14)" : "0 2px 8px rgba(0,0,0,0.04)",
         transform: hovered ? "translateY(-4px)" : "translateY(0)",
-        display: "flex", flexDirection: "column",
-        cursor: "pointer",
-        animationDelay: `${idx * 0.06}s`, animationFillMode: "both",
+        display: "flex", flexDirection: "column", cursor: "pointer",
+        animationDelay: `${idx * 0.05}s`, animationFillMode: "both",
       }}
       className="card-in"
     >
+      {/* Image / Placeholder */}
       <div style={{
-        height: "120px",
+        height: "180px",
         background: `linear-gradient(135deg, ${p.color || "#e8c4a0"}55 0%, ${p.color || "#e8c4a0"}22 100%)`,
-        display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        position: "relative", overflow: "hidden",
       }}>
-        <CatIcon cat={p.cat} color={p.color} />
+        {imgUrl && !imgError ? (
+          <img src={imgUrl} alt={p.en} onError={() => setImgError(true)}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+        ) : (
+          <div style={{ opacity: 0.75 }}><CatIcon cat={p.cat} color={p.color} size={56}/></div>
+        )}
         {p.tag && (
           <span style={{
-            position: "absolute", top: "12px", right: "12px",
+            position: "absolute", top: "10px", right: "10px",
             background: p.tag === "新品" ? "#7bbfac" : "#c8956c",
-            color: "#fff", fontSize: "10px", fontFamily: SAN,
+            color: "#fff", fontSize: "9px", fontFamily: SAN,
             fontWeight: 700, letterSpacing: "1px", padding: "3px 10px", borderRadius: "20px",
           }}>{p.tag === "新品" ? "NEW" : "BESTSELLER"}</span>
         )}
-        {/* View detail hint */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "rgba(200,149,108,0.12)",
+          background: "rgba(200,149,108,0.1)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          opacity: hovered ? 1 : 0,
-          transition: "opacity 0.25s",
-          fontFamily: SAN, fontSize: "11px", letterSpacing: "2px",
-          color: "#8a5c38", fontWeight: 700,
-        }}>VIEW DETAILS</div>
+          opacity: hovered ? 1 : 0, transition: "opacity 0.25s",
+        }}>
+          <span style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "2px", color: "#7a4a28", fontWeight: 700, background: "rgba(255,255,255,0.85)", padding: "6px 16px", borderRadius: "20px" }}>
+            VIEW DETAILS
+          </span>
+        </div>
       </div>
 
-      <div style={{ padding: "16px 18px 18px", flex: 1, display: "flex", flexDirection: "column", gap: "5px" }}>
-        <span style={{ fontSize: "10px", letterSpacing: "2px", color: "#c8956c", fontFamily: SAN, fontWeight: 700 }}>
+      <div style={{ padding: "14px 16px 16px", flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+        <span style={{ fontSize: "9px", letterSpacing: "2px", color: "#c8956c", fontFamily: SAN, fontWeight: 700 }}>
           {p.id} · {CAT_EN[p.cat] || p.cat}
         </span>
-        <h3 style={{ fontFamily: SER, fontSize: "15px", fontWeight: 700, color: "#2a1f18", lineHeight: 1.35, margin: 0 }}>
+        <h3 style={{ fontFamily: SER, fontSize: "14px", fontWeight: 700, color: "#2a1f18", lineHeight: 1.35, margin: 0 }}>
           {p.en}
         </h3>
         <p style={{ fontFamily: SAN, fontSize: "11px", color: "#a08878", margin: 0 }}>{p.name}</p>
-        <p style={{ fontFamily: SAN, fontSize: "12px", color: "#8a7868", lineHeight: 1.7, margin: "4px 0 0", flex: 1 }}>
+        <p style={{ fontFamily: SAN, fontSize: "11px", color: "#8a7868", lineHeight: 1.7, margin: "4px 0 0", flex: 1 }}>
           {p.desc}
         </p>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginTop: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: "3px" }}>
-            <span style={{ fontFamily: SER, fontSize: "20px", fontWeight: 700, color: "#c8956c", letterSpacing: "-0.5px" }}>{p.price}</span>
-            <span style={{ fontSize: "11px", color: "#b0a090", fontFamily: SAN }}>{p.unit}</span>
+            <span style={{ fontFamily: SER, fontSize: "18px", fontWeight: 700, color: "#c8956c", letterSpacing: "-0.5px" }}>{p.price}</span>
+            <span style={{ fontSize: "10px", color: "#b0a090", fontFamily: SAN }}>{p.unit}</span>
           </div>
-          <span style={{ fontFamily: SAN, fontSize: "10px", color: "#c8956c", letterSpacing: "1px" }}>Details →</span>
+          <span style={{ fontFamily: SAN, fontSize: "10px", color: "#c8956c", fontWeight: 700, letterSpacing: "1px" }}>Details →</span>
         </div>
       </div>
     </div>
   );
 }
 
-const STRIPS = ["✦ Order via WhatsApp", "✦ Worldwide Shipping", "✦ Wholesale & Retail", "✦ New Arrivals Weekly"];
+const STRIPS = ["✦ Order via WhatsApp","✦ Worldwide Shipping","✦ Wholesale & Retail","✦ New Arrivals Weekly"];
 
+// ── Main App ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [cat, setCat] = useState("All");
   const [search, setSearch] = useState("");
@@ -313,7 +370,7 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [selected, setSelected] = useState(null);
+  const [detailProduct, setDetailProduct] = useState(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -338,8 +395,47 @@ export default function App() {
     return matchCat && matchSearch;
   });
 
+  const NavBar = () => (
+    <header style={{
+      position: "sticky", top: 0, zIndex: 100,
+      background: scrolled ? "rgba(250,248,245,0.97)" : "#faf8f5",
+      borderBottom: scrolled ? "1px solid #ede8e0" : "1px solid transparent",
+      backdropFilter: "blur(12px)",
+      boxShadow: scrolled ? "0 2px 16px rgba(0,0,0,0.05)" : "none",
+      transition: "all 0.3s",
+    }}>
+      <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
+        <div onClick={() => setDetailProduct(null)} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg,#e8b88a,#c8956c)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#fff", fontSize: "16px" }}>✦</span>
+          </div>
+          <div>
+            <div style={{ fontFamily: SER, fontSize: "17px", fontWeight: 700, color: "#2a1f18", lineHeight: 1 }}>Panlea</div>
+            <div style={{ fontFamily: SAN, fontSize: "9px", letterSpacing: "3px", color: "#c8956c", fontWeight: 700 }}>ACCESSORIES</div>
+          </div>
+        </div>
+        <nav style={{ display: "flex", gap: "28px", alignItems: "center" }}>
+          {["Home","Shop","About","Contact"].map(l => (
+            <a key={l} href="#" onClick={l==="Shop"?e=>{e.preventDefault();setDetailProduct(null);}:undefined}
+              style={{ fontFamily: SAN, fontSize: "12px", fontWeight: 600, letterSpacing: "1px", color: "#7a6858", textDecoration: "none" }}
+              onMouseEnter={e=>e.target.style.color="#c8956c"}
+              onMouseLeave={e=>e.target.style.color="#7a6858"}
+            >{l}</a>
+          ))}
+          <button onClick={() => openWhatsApp("General Enquiry","—")}
+            style={{ background: "#c8956c", color: "#fff", border: "none", borderRadius: "40px", padding: "9px 20px", fontFamily: SAN, fontSize: "12px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
+            onMouseEnter={e=>e.currentTarget.style.background="#a87050"}
+            onMouseLeave={e=>e.currentTarget.style.background="#c8956c"}
+          >
+            <WhatsAppIcon size={13} color="#fff"/> Order Now
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+
   return (
-    <div style={{ minHeight: "100vh", background: "#faf8f5", color: "#2a1f18" }}>
+    <div style={{ minHeight: "100vh", background: "#faf8f5" }}>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:5px;}
@@ -349,214 +445,179 @@ export default function App() {
         .card-in{animation:cardIn 0.5s ease both;}
         @keyframes marquee{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
         .marquee-inner{display:flex;animation:marquee 22s linear infinite;white-space:nowrap;}
-        @keyframes modalIn{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
         .cat-pill{background:#fff;border:1.5px solid #ede8e0;border-radius:40px;padding:8px 20px;font-family:${SAN};font-size:12px;letter-spacing:1px;color:#7a6858;cursor:pointer;transition:all 0.22s;white-space:nowrap;font-weight:600;}
         .cat-pill:hover{border-color:#c8956c;color:#c8956c;}
         .cat-pill.active{background:#c8956c;border-color:#c8956c;color:#fff;}
         .search-box{border:1.5px solid #ede8e0;border-radius:40px;padding:10px 20px 10px 44px;font-family:${SAN};font-size:13px;color:#2a1f18;background:#fff;outline:none;transition:border-color 0.22s;width:220px;}
         .search-box:focus{border-color:#c8956c;}
         .search-box::placeholder{color:#c0b0a0;}
-        .wa-float{position:fixed;bottom:28px;right:28px;z-index:200;background:#25D366;border-radius:50%;width:58px;height:58px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.35);cursor:pointer;border:none;transition:transform 0.2s;}
-        .wa-float:hover{transform:scale(1.1);}
+        .wa-float{position:fixed;bottom:28px;right:28px;z-index:200;background:#25D366;border-radius:50%;width:58px;height:58px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.35);cursor:pointer;border:none;}
         @keyframes pulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,0.35);}50%{box-shadow:0 4px 28px rgba(37,211,102,0.6);}}
         .wa-float{animation:pulse 2.5s ease infinite;}
         @keyframes spin{to{transform:rotate(360deg);}}
         .spinner{width:40px;height:40px;border:3px solid #ede8e0;border-top-color:#c8956c;border-radius:50%;animation:spin 0.8s linear infinite;margin:80px auto;}
       `}</style>
 
-      {/* Nav */}
-      <header style={{
-        position: "sticky", top: 0, zIndex: 100,
-        background: scrolled ? "rgba(250,248,245,0.97)" : "#faf8f5",
-        borderBottom: scrolled ? "1px solid #ede8e0" : "1px solid transparent",
-        backdropFilter: "blur(12px)",
-        boxShadow: scrolled ? "0 2px 16px rgba(0,0,0,0.05)" : "none",
-        transition: "all 0.3s",
-      }}>
-        <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg,#e8b88a,#c8956c)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#fff", fontSize: "16px" }}>✦</span>
-            </div>
-            <div>
-              <div style={{ fontFamily: SER, fontSize: "17px", fontWeight: 700, color: "#2a1f18", lineHeight: 1 }}>Panlea</div>
-              <div style={{ fontFamily: SAN, fontSize: "9px", letterSpacing: "3px", color: "#c8956c", fontWeight: 700 }}>ACCESSORIES</div>
+      <NavBar />
+
+      {/* Detail Page */}
+      {detailProduct ? (
+        <DetailPage p={detailProduct} onBack={() => setDetailProduct(null)} />
+      ) : (
+        <>
+          {/* Marquee */}
+          <div style={{ background: "#2a1f18", overflow: "hidden", padding: "10px 0" }}>
+            <div className="marquee-inner">
+              {[...STRIPS,...STRIPS,...STRIPS].map((s,i) => (
+                <span key={i} style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "3px", color: "#c8b098", padding: "0 40px", fontWeight: 600 }}>{s}</span>
+              ))}
             </div>
           </div>
-          <nav style={{ display: "flex", gap: "32px", alignItems: "center" }}>
-            {["Home","Shop","About","Contact"].map(l => (
-              <a key={l} href="#" style={{ fontFamily: SAN, fontSize: "12px", fontWeight: 600, letterSpacing: "1px", color: "#7a6858", textDecoration: "none", transition: "color 0.2s" }}
-                onMouseEnter={e=>e.target.style.color="#c8956c"}
-                onMouseLeave={e=>e.target.style.color="#7a6858"}
-              >{l}</a>
+
+          {/* Hero */}
+          <section style={{ background: "linear-gradient(135deg,#fff8f2 0%,#fdf3eb 50%,#faf0e8 100%)", padding: "72px 24px 64px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+            {[280,180,100].map((s,i)=>(
+              <div key={i} style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:`${s}px`,height:`${s}px`,borderRadius:"50%",border:`1px solid rgba(200,149,108,${0.06+i*0.04})`,pointerEvents:"none" }}/>
             ))}
-            <button onClick={() => openWhatsApp("General Enquiry","—")}
-              style={{ background: "#c8956c", color: "#fff", border: "none", borderRadius: "40px", padding: "9px 20px", fontFamily: SAN, fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
-              onMouseEnter={e=>e.currentTarget.style.background="#a87050"}
-              onMouseLeave={e=>e.currentTarget.style.background="#c8956c"}
-            >
-              <WhatsAppIcon size={13} color="#fff"/> Order Now
-            </button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Marquee */}
-      <div style={{ background: "#2a1f18", overflow: "hidden", padding: "10px 0" }}>
-        <div className="marquee-inner">
-          {[...STRIPS,...STRIPS,...STRIPS].map((s,i) => (
-            <span key={i} style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "3px", color: "#c8b098", padding: "0 40px", fontWeight: 600 }}>{s}</span>
-          ))}
-        </div>
-      </div>
-
-      {/* Hero */}
-      <section style={{ background: "linear-gradient(135deg,#fff8f2 0%,#fdf3eb 50%,#faf0e8 100%)", padding: "72px 24px 64px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        {[280,180,100].map((s,i)=>(
-          <div key={i} style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:`${s}px`,height:`${s}px`,borderRadius:"50%",border:`1px solid rgba(200,149,108,${0.06+i*0.04})`,pointerEvents:"none" }}/>
-        ))}
-        <p style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "5px", color: "#c8956c", fontWeight: 700, marginBottom: "16px" }}>DIY JEWELLERY ACCESSORIES STORE</p>
-        <h1 style={{ fontFamily: SER, fontSize: "clamp(36px,7vw,72px)", fontWeight: 700, color: "#2a1f18", lineHeight: 1.15, marginBottom: "8px" }}>Panlea Accessories</h1>
-        <p style={{ fontFamily: SER, fontStyle: "italic", fontSize: "clamp(14px,2vw,20px)", color: "#c8956c", letterSpacing: "2px", marginBottom: "24px" }}>Create · Personalise · Express</p>
-        <p style={{ fontFamily: SAN, fontSize: "14px", color: "#9a8878", lineHeight: 2, maxWidth: "480px", margin: "0 auto 36px" }}>
-          Beads · Charms · Chains · Findings · Tools<br/>Your one-stop DIY accessories supplier — Retail & Wholesale
-        </p>
-        <div style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
-          <button onClick={() => document.getElementById("shop").scrollIntoView({ behavior: "smooth" })}
-            style={{ background: "#2a1f18", color: "#fff", border: "none", borderRadius: "40px", padding: "13px 32px", fontFamily: SAN, fontWeight: 700, fontSize: "14px", cursor: "pointer", letterSpacing: "0.5px" }}>
-            Shop Now
-          </button>
-          <button onClick={() => openWhatsApp("Wholesale Enquiry","—")}
-            style={{ background: "transparent", color: "#c8956c", border: "2px solid #c8956c", borderRadius: "40px", padding: "13px 32px", fontFamily: SAN, fontWeight: 700, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", letterSpacing: "0.5px" }}>
-            <WhatsAppIcon size={15} color="#c8956c"/> Wholesale Enquiry
-          </button>
-        </div>
-        <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginTop: "40px" }}>
-          {["🌍 Worldwide Shipping","📦 Retail & Wholesale","💬 WhatsApp Order","✨ New Arrivals"].map(f => (
-            <span key={f} style={{ background: "#fff", border: "1.5px solid #ede8e0", borderRadius: "40px", padding: "7px 18px", fontFamily: SAN, fontSize: "12px", color: "#7a6858", fontWeight: 600 }}>{f}</span>
-          ))}
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section style={{ background: "#fff", padding: "48px 24px 40px", borderBottom: "1px solid #f0ebe2" }}>
-        <div style={{ maxWidth: "1240px", margin: "0 auto" }}>
-          <p style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "4px", color: "#c8956c", fontWeight: 700, textAlign: "center", marginBottom: "32px" }}>SHOP BY CATEGORY</p>
-          <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
-            {[
-              { label:"Beads", cat:"串珠", icon:"🪨" },
-              { label:"Charms", cat:"吊坠配件", icon:"🔮" },
-              { label:"Chains & Wire", cat:"链条线材", icon:"🧵" },
-              { label:"Findings", cat:"五金配件", icon:"🪝" },
-              { label:"Tools", cat:"工具", icon:"🔧" },
-            ].map(c => (
-              <button key={c.label}
-                onClick={() => { setCat(c.label); document.getElementById("shop").scrollIntoView({ behavior: "smooth" }); }}
-                style={{ background: "#faf8f5", border: "1.5px solid #ede8e0", borderRadius: "16px", padding: "20px 28px", cursor: "pointer", textAlign: "center", transition: "all 0.22s", minWidth: "120px" }}
-                onMouseEnter={e=>{ e.currentTarget.style.borderColor="#c8956c"; e.currentTarget.style.background="#fff8f2"; }}
-                onMouseLeave={e=>{ e.currentTarget.style.borderColor="#ede8e0"; e.currentTarget.style.background="#faf8f5"; }}
-              >
-                <div style={{ fontSize: "28px", marginBottom: "8px" }}>{c.icon}</div>
-                <div style={{ fontFamily: SAN, fontSize: "13px", color: "#2a1f18", fontWeight: 700, letterSpacing: "0.5px" }}>{c.label}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Shop */}
-      <section id="shop" style={{ maxWidth: "1240px", margin: "0 auto", padding: "60px 24px 80px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginBottom: "36px" }}>
-          <div>
-            <h2 style={{ fontFamily: SER, fontSize: "28px", fontWeight: 700, color: "#2a1f18" }}>
-              All Products <span style={{ fontStyle: "italic", color: "#c8956c" }}>Collection</span>
-            </h2>
-            <p style={{ fontFamily: SAN, fontSize: "12px", color: "#a09080", marginTop: "4px", letterSpacing: "0.5px" }}>
-              {filtered.length} items · Click any product to view details
+            <p style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "5px", color: "#c8956c", fontWeight: 700, marginBottom: "16px" }}>DIY JEWELLERY ACCESSORIES STORE</p>
+            <h1 style={{ fontFamily: SER, fontSize: "clamp(36px,7vw,72px)", fontWeight: 700, color: "#2a1f18", lineHeight: 1.15, marginBottom: "8px" }}>Panlea Accessories</h1>
+            <p style={{ fontFamily: SER, fontStyle: "italic", fontSize: "clamp(14px,2vw,20px)", color: "#c8956c", letterSpacing: "2px", marginBottom: "24px" }}>Create · Personalise · Express</p>
+            <p style={{ fontFamily: SAN, fontSize: "14px", color: "#9a8878", lineHeight: 2, maxWidth: "480px", margin: "0 auto 36px" }}>
+              Beads · Charms · Chains · Findings · Tools<br/>Your one-stop DIY accessories supplier — Retail & Wholesale
             </p>
-          </div>
-          <div style={{ position: "relative" }}>
-            <svg style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c0b0a0" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <input className="search-box" placeholder="Search products..." value={search} onChange={e=>setSearch(e.target.value)}/>
-          </div>
-        </div>
+            <div style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button onClick={() => document.getElementById("shop").scrollIntoView({ behavior: "smooth" })}
+                style={{ background: "#2a1f18", color: "#fff", border: "none", borderRadius: "40px", padding: "13px 32px", fontFamily: SAN, fontWeight: 700, fontSize: "14px", cursor: "pointer" }}>
+                Shop Now
+              </button>
+              <button onClick={() => openWhatsApp("Wholesale Enquiry","—")}
+                style={{ background: "transparent", color: "#c8956c", border: "2px solid #c8956c", borderRadius: "40px", padding: "13px 32px", fontFamily: SAN, fontWeight: 700, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                <WhatsAppIcon size={15} color="#c8956c"/> Wholesale Enquiry
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginTop: "40px" }}>
+              {["🌍 Worldwide Shipping","📦 Retail & Wholesale","💬 WhatsApp Order","✨ New Arrivals"].map(f => (
+                <span key={f} style={{ background: "#fff", border: "1.5px solid #ede8e0", borderRadius: "40px", padding: "7px 18px", fontFamily: SAN, fontSize: "12px", color: "#7a6858", fontWeight: 600 }}>{f}</span>
+              ))}
+            </div>
+          </section>
 
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "36px" }}>
-          {catLabels.map(c => (
-            <button key={c} className={`cat-pill ${cat===c?"active":""}`} onClick={()=>setCat(c)}>{c}</button>
-          ))}
-        </div>
-
-        {loading ? (
-          <div className="spinner"/>
-        ) : error ? (
-          <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <p style={{ fontFamily: SAN, fontSize: "14px", color: "#c8956c" }}>⚠️ Failed to load products. Please refresh.</p>
-          </div>
-        ) : filtered.length > 0 ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: "20px" }}>
-            {filtered.map((p,i) => <ProductCard key={p.id} p={p} idx={i} onClick={()=>setSelected(p)}/>)}
-          </div>
-        ) : (
-          <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <p style={{ fontFamily: SAN, fontSize: "14px", color: "#b0a090" }}>No products found. Try a different keyword.</p>
-          </div>
-        )}
-      </section>
-
-      {/* How to Order */}
-      <section style={{ background: "#2a1f18", padding: "60px 24px" }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto", textAlign: "center" }}>
-          <p style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "5px", color: "#c8956c", fontWeight: 700, marginBottom: "16px" }}>HOW TO ORDER</p>
-          <h2 style={{ fontFamily: SER, fontSize: "clamp(24px,4vw,40px)", color: "#f5ede0", fontWeight: 400, fontStyle: "italic", marginBottom: "40px" }}>Simple & Easy</h2>
-          <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
-            {[
-              { step:"01", icon:"🔍", title:"Browse", desc:"Explore our product collection" },
-              { step:"02", icon:"💬", title:"WhatsApp", desc:"Click the WhatsApp button on any item" },
-              { step:"03", icon:"✅", title:"Confirm", desc:"Confirm items, quantity & address" },
-              { step:"04", icon:"📦", title:"Delivery", desc:"Pay & wait for your order" },
-            ].map((s,i) => (
-              <div key={s.step} style={{ flex:"1", minWidth:"160px", padding:"20px", position:"relative" }}>
-                {i<3 && <div style={{ position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",color:"#4a3828",fontSize:"20px" }}>›</div>}
-                <div style={{ fontSize:"28px", marginBottom:"12px" }}>{s.icon}</div>
-                <div style={{ fontFamily:SAN, fontSize:"10px", color:"#c8956c", letterSpacing:"3px", marginBottom:"6px", fontWeight:700 }}>STEP {s.step}</div>
-                <div style={{ fontFamily:SER, fontSize:"16px", color:"#f5ede0", fontWeight:700, marginBottom:"6px" }}>{s.title}</div>
-                <div style={{ fontFamily:SAN, fontSize:"11px", color:"#8a7868", lineHeight:1.6 }}>{s.desc}</div>
+          {/* Categories */}
+          <section style={{ background: "#fff", padding: "48px 24px 40px", borderBottom: "1px solid #f0ebe2" }}>
+            <div style={{ maxWidth: "1240px", margin: "0 auto" }}>
+              <p style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "4px", color: "#c8956c", fontWeight: 700, textAlign: "center", marginBottom: "32px" }}>SHOP BY CATEGORY</p>
+              <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+                {[
+                  { label:"Beads", cat:"串珠", icon:"🪨" },
+                  { label:"Charms", cat:"吊坠配件", icon:"🔮" },
+                  { label:"Chains & Wire", cat:"链条线材", icon:"🧵" },
+                  { label:"Findings", cat:"五金配件", icon:"🪝" },
+                  { label:"Tools", cat:"工具", icon:"🔧" },
+                ].map(c => (
+                  <button key={c.label}
+                    onClick={() => { setCat(c.label); document.getElementById("shop").scrollIntoView({ behavior: "smooth" }); }}
+                    style={{ background: "#faf8f5", border: "1.5px solid #ede8e0", borderRadius: "16px", padding: "20px 28px", cursor: "pointer", textAlign: "center", transition: "all 0.22s", minWidth: "120px" }}
+                    onMouseEnter={e=>{ e.currentTarget.style.borderColor="#c8956c"; e.currentTarget.style.background="#fff8f2"; }}
+                    onMouseLeave={e=>{ e.currentTarget.style.borderColor="#ede8e0"; e.currentTarget.style.background="#faf8f5"; }}
+                  >
+                    <div style={{ fontSize: "28px", marginBottom: "8px" }}>{c.icon}</div>
+                    <div style={{ fontFamily: SAN, fontSize: "13px", color: "#2a1f18", fontWeight: 700 }}>{c.label}</div>
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-          <button onClick={() => openWhatsApp("Order Enquiry","—")}
-            style={{ marginTop:"40px", background:"#25D366", color:"#fff", border:"none", borderRadius:"40px", padding:"14px 36px", fontFamily:SAN, fontWeight:700, fontSize:"15px", cursor:"pointer", display:"inline-flex", alignItems:"center", gap:"10px", boxShadow:"0 4px 20px rgba(37,211,102,0.3)", letterSpacing:"0.5px" }}>
-            <WhatsAppIcon size={18} color="#fff"/> Order via WhatsApp Now
-          </button>
-        </div>
-      </section>
+            </div>
+          </section>
 
-      {/* Footer */}
-      <footer style={{ background: "#1e1610", padding: "40px 24px 28px" }}>
-        <div style={{ maxWidth: "1240px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
-          <div>
-            <div style={{ fontFamily: SER, fontSize: "18px", fontWeight: 700, color: "#e8d0b0" }}>Panlea Accessories</div>
-            <div style={{ fontFamily: SAN, fontSize: "11px", color: "#6a5848", marginTop: "4px", letterSpacing: "1px" }}>DIY JEWELLERY ACCESSORIES · WORLDWIDE</div>
-          </div>
-          <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
-            {["Shop","About","Contact"].map(l => (
-              <a key={l} href="#" style={{ fontFamily: SAN, fontSize: "12px", color: "#6a5848", textDecoration: "none", fontWeight: 600, letterSpacing: "1px" }}>{l}</a>
-            ))}
-          </div>
-          <p style={{ fontFamily: SAN, fontSize: "11px", color: "#4a3828" }}>© 2024 Panlea Accessories. All rights reserved.</p>
-        </div>
-      </footer>
+          {/* Shop */}
+          <section id="shop" style={{ maxWidth: "1240px", margin: "0 auto", padding: "60px 24px 80px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginBottom: "36px" }}>
+              <div>
+                <h2 style={{ fontFamily: SER, fontSize: "28px", fontWeight: 700, color: "#2a1f18" }}>
+                  All Products <span style={{ fontStyle: "italic", color: "#c8956c" }}>Collection</span>
+                </h2>
+                <p style={{ fontFamily: SAN, fontSize: "12px", color: "#a09080", marginTop: "4px" }}>
+                  {filtered.length} items · Click any product to view details
+                </p>
+              </div>
+              <div style={{ position: "relative" }}>
+                <svg style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c0b0a0" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input className="search-box" placeholder="Search products..." value={search} onChange={e=>setSearch(e.target.value)}/>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "36px" }}>
+              {catLabels.map(c => (
+                <button key={c} className={`cat-pill ${cat===c?"active":""}`} onClick={()=>setCat(c)}>{c}</button>
+              ))}
+            </div>
+            {loading ? (
+              <div className="spinner"/>
+            ) : error ? (
+              <div style={{ textAlign: "center", padding: "80px 0" }}>
+                <p style={{ fontFamily: SAN, fontSize: "14px", color: "#c8956c" }}>⚠️ Failed to load products. Please refresh.</p>
+              </div>
+            ) : filtered.length > 0 ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: "20px" }}>
+                {filtered.map((p,i) => <ProductCard key={p.id} p={p} idx={i} onClick={()=>setDetailProduct(p)}/>)}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "80px 0" }}>
+                <p style={{ fontFamily: SAN, fontSize: "14px", color: "#b0a090" }}>No products found.</p>
+              </div>
+            )}
+          </section>
+
+          {/* How to Order */}
+          <section style={{ background: "#2a1f18", padding: "60px 24px" }}>
+            <div style={{ maxWidth: "900px", margin: "0 auto", textAlign: "center" }}>
+              <p style={{ fontFamily: SAN, fontSize: "11px", letterSpacing: "5px", color: "#c8956c", fontWeight: 700, marginBottom: "16px" }}>HOW TO ORDER</p>
+              <h2 style={{ fontFamily: SER, fontSize: "clamp(24px,4vw,40px)", color: "#f5ede0", fontStyle: "italic", marginBottom: "40px" }}>Simple & Easy</h2>
+              <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
+                {[
+                  { step:"01", icon:"🔍", title:"Browse", desc:"Explore our product collection" },
+                  { step:"02", icon:"💬", title:"WhatsApp", desc:"Click Order via WhatsApp on any item" },
+                  { step:"03", icon:"✅", title:"Confirm", desc:"Confirm items, quantity & address" },
+                  { step:"04", icon:"📦", title:"Delivery", desc:"Pay & wait for your order" },
+                ].map((s,i) => (
+                  <div key={s.step} style={{ flex:"1", minWidth:"160px", padding:"20px", position:"relative" }}>
+                    {i<3 && <div style={{ position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",color:"#4a3828",fontSize:"20px" }}>›</div>}
+                    <div style={{ fontSize:"28px", marginBottom:"12px" }}>{s.icon}</div>
+                    <div style={{ fontFamily:SAN, fontSize:"10px", color:"#c8956c", letterSpacing:"3px", marginBottom:"6px", fontWeight:700 }}>STEP {s.step}</div>
+                    <div style={{ fontFamily:SER, fontSize:"16px", color:"#f5ede0", fontWeight:700, marginBottom:"6px" }}>{s.title}</div>
+                    <div style={{ fontFamily:SAN, fontSize:"11px", color:"#8a7868", lineHeight:1.6 }}>{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => openWhatsApp("Order Enquiry","—")}
+                style={{ marginTop:"40px", background:"#25D366", color:"#fff", border:"none", borderRadius:"40px", padding:"14px 36px", fontFamily:SAN, fontWeight:700, fontSize:"15px", cursor:"pointer", display:"inline-flex", alignItems:"center", gap:"10px", boxShadow:"0 4px 20px rgba(37,211,102,0.3)" }}>
+                <WhatsAppIcon size={18} color="#fff"/> Order via WhatsApp Now
+              </button>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer style={{ background: "#1e1610", padding: "40px 24px 28px" }}>
+            <div style={{ maxWidth: "1240px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
+              <div>
+                <div style={{ fontFamily: SER, fontSize: "18px", fontWeight: 700, color: "#e8d0b0" }}>Panlea Accessories</div>
+                <div style={{ fontFamily: SAN, fontSize: "11px", color: "#6a5848", marginTop: "4px", letterSpacing: "1px" }}>DIY JEWELLERY ACCESSORIES · WORLDWIDE</div>
+              </div>
+              <div style={{ display: "flex", gap: "24px" }}>
+                {["Shop","About","Contact"].map(l => (
+                  <a key={l} href="#" style={{ fontFamily: SAN, fontSize: "12px", color: "#6a5848", textDecoration: "none", fontWeight: 600 }}>{l}</a>
+                ))}
+              </div>
+              <p style={{ fontFamily: SAN, fontSize: "11px", color: "#4a3828" }}>© 2024 Panlea Accessories. All rights reserved.</p>
+            </div>
+          </footer>
+        </>
+      )}
 
       {/* Float WhatsApp */}
       <button className="wa-float" onClick={() => openWhatsApp("General Enquiry","—")} title="WhatsApp Us">
         <WhatsAppIcon size={28} color="#fff"/>
       </button>
-
-      {/* Detail Modal */}
-      {selected && <DetailModal p={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }
