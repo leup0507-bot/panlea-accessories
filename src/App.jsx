@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 
 const WA_NUMBER = "+8618157970409";
+const SHEET_ID = "1MSwdIxakWwu7G6GbRjjJsUx5UNOnCxrAWYmXGTkdP_Y";
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 
 const openWhatsApp = (productName, productCode) => {
   const msg = encodeURIComponent(
@@ -9,29 +11,29 @@ const openWhatsApp = (productName, productCode) => {
   window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, "_blank");
 };
 
-const PRODUCTS = [
-  { id: "PA001", name: "天然石米珠套装", en: "Natural Stone Seed Beads Set", cat: "串珠", tag: "热销", color: "#e8c4a0", desc: "多色天然石米珠，适合手链 / 项链 DIY", price: "RM 12.90", unit: "/ 套" },
-  { id: "PA002", name: "玻璃水晶珠", en: "Crystal Glass Beads", cat: "串珠", tag: "新品", color: "#c4d8e8", desc: "高透感玻璃水晶，光折射极佳", price: "RM 8.90", unit: "/ 包" },
-  { id: "PA003", name: "木质圆珠", en: "Natural Wood Round Beads", cat: "串珠", tag: "", color: "#c8aa84", desc: "天然木纹，轻盈质感，Boho 风格首选", price: "RM 6.50", unit: "/ 包" },
-  { id: "PA004", name: "仿珍珠米珠", en: "Faux Pearl Seed Beads", cat: "串珠", tag: "", color: "#f0ece4", desc: "优雅奶白色，古典优雅风格必备", price: "RM 9.90", unit: "/ 包" },
-  { id: "PA005", name: "星月吊坠套装", en: "Star & Moon Charm Set", cat: "吊坠配件", tag: "热销", color: "#d4b896", desc: "镀金星月造型，5种款式混装", price: "RM 15.90", unit: "/ 套" },
-  { id: "PA006", name: "蝴蝶结合金吊坠", en: "Bow Knot Alloy Charm", cat: "吊坠配件", tag: "", color: "#e8c4cc", desc: "甜美蝴蝶结，适合手链 / 耳环", price: "RM 4.50", unit: "/ 个" },
-  { id: "PA007", name: "四叶草吊坠", en: "Four-Leaf Clover Pendant", cat: "吊坠配件", tag: "新品", color: "#b8d4b0", desc: "带来好运的四叶草，镀K金款式", price: "RM 5.90", unit: "/ 个" },
-  { id: "PA008", name: "字母吊牌 A–Z", en: "Letter Charm A–Z", cat: "吊坠配件", tag: "", color: "#dcd4c0", desc: "可定制首字母，个性化必备单品", price: "RM 3.50", unit: "/ 个" },
-  { id: "PA009", name: "304不锈钢链条", en: "304 Stainless Steel Chain", cat: "链条线材", tag: "", color: "#c8c8c8", desc: "防过敏抗氧化，1米装，多宽度可选", price: "RM 7.90", unit: "/ 米" },
-  { id: "PA010", name: "渔线弹力线", en: "Elastic Beading Cord", cat: "链条线材", tag: "热销", color: "#e8e8e0", desc: "高弹性透明鱼线，穿珠不易断", price: "RM 5.50", unit: "/ 卷" },
-  { id: "PA011", name: "铜丝编织线", en: "Copper Craft Wire", cat: "链条线材", tag: "", color: "#d4a870", desc: "0.3mm / 0.5mm 可选，适合绕线工艺", price: "RM 6.90", unit: "/ 卷" },
-  { id: "PA012", name: "龙虾扣合扣套装", en: "Lobster Clasp & Jump Ring Set", cat: "五金配件", tag: "热销", color: "#d0c8b8", desc: "金 / 银两色，100件混装", price: "RM 11.90", unit: "/ 套" },
-  { id: "PA013", name: "耳钩耳针套装", en: "Ear Hook & Stud Post Set", cat: "五金配件", tag: "", color: "#e0d4c0", desc: "防过敏材质，50对装，适合DIY耳饰", price: "RM 13.90", unit: "/ 套" },
-  { id: "PA014", name: "DIY 工具三件套", en: "DIY Plier Tool Kit", cat: "工具", tag: "新品", color: "#c0c8d0", desc: "圆嘴钳 + 平嘴钳 + 斜口钳套装", price: "RM 28.90", unit: "/ 套" },
-  { id: "PA015", name: "收纳盒格子盘", en: "Bead Organizer Tray", cat: "工具", tag: "", color: "#e4dcd4", desc: "36格透明收纳，归类整理更方便", price: "RM 18.90", unit: "/ 个" },
-  { id: "PA016", name: "OPP 自封袋（小）", en: "OPP Self-Seal Bags (S)", cat: "工具", tag: "", color: "#e8e8e8", desc: "透明小袋，方便包装成品饰品", price: "RM 4.90", unit: "/ 包" },
-];
-
-const CATS = ["全部 All", "串珠", "吊坠配件", "链条线材", "五金配件", "工具"];
-
 const SAN = "'PingFang SC','Microsoft YaHei','微软雅黑','Helvetica Neue',Arial,sans-serif";
 const SER = "Georgia,'Times New Roman','宋体','SimSun',serif";
+
+const CATS_ALL = ["全部 All", "串珠", "吊坠配件", "链条线材", "五金配件", "工具"];
+
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  const headers = lines[0].split(",").map(h => h.replace(/^"|"$/g, "").trim());
+  return lines.slice(1).map(line => {
+    const values = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === "," && !inQ) { values.push(cur.trim()); cur = ""; }
+      else { cur += ch; }
+    }
+    values.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = (values[i] || "").replace(/^"|"$/g, ""); });
+    return obj;
+  }).filter(r => r.id);
+}
 
 function CatIcon({ cat, color }) {
   const c = color || "#c8956c";
@@ -91,31 +93,27 @@ function ProductCard({ p, idx }) {
       style={{
         background: "#fff",
         border: `1.5px solid ${hovered ? "#c8956c" : "#ede8e0"}`,
-        borderRadius: "16px",
-        overflow: "hidden",
+        borderRadius: "16px", overflow: "hidden",
         transition: "border-color 0.28s, box-shadow 0.28s, transform 0.28s",
         boxShadow: hovered ? "0 8px 32px rgba(200,149,108,0.14)" : "0 2px 8px rgba(0,0,0,0.04)",
         transform: hovered ? "translateY(-4px)" : "translateY(0)",
-        display: "flex",
-        flexDirection: "column",
-        animationDelay: `${idx * 0.06}s`,
-        animationFillMode: "both",
+        display: "flex", flexDirection: "column",
+        animationDelay: `${idx * 0.06}s`, animationFillMode: "both",
       }}
       className="card-in"
     >
       <div style={{
         height: "120px",
-        background: `linear-gradient(135deg, ${p.color}55 0%, ${p.color}22 100%)`,
+        background: `linear-gradient(135deg, ${p.color || "#e8c4a0"}55 0%, ${p.color || "#e8c4a0"}22 100%)`,
         display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
       }}>
-        <CatIcon cat={p.cat} color={p.color.replace(/\s/g,"")} />
+        <CatIcon cat={p.cat} color={p.color} />
         {p.tag && (
           <span style={{
             position: "absolute", top: "12px", right: "12px",
             background: p.tag === "新品" ? "#7bbfac" : "#c8956c",
             color: "#fff", fontSize: "10px", fontFamily: SAN,
-            fontWeight: 600, letterSpacing: "1px",
-            padding: "3px 10px", borderRadius: "20px",
+            fontWeight: 600, letterSpacing: "1px", padding: "3px 10px", borderRadius: "20px",
           }}>{p.tag}</span>
         )}
       </div>
@@ -162,6 +160,9 @@ export default function App() {
   const [cat, setCat] = useState("全部 All");
   const [search, setSearch] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -169,7 +170,23 @@ export default function App() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const filtered = PRODUCTS.filter(p => {
+  useEffect(() => {
+    fetch(SHEET_URL)
+      .then(r => r.text())
+      .then(text => {
+        const data = parseCSV(text);
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, []);
+
+  const cats = ["全部 All", ...new Set(products.map(p => p.cat).filter(Boolean))];
+
+  const filtered = products.filter(p => {
     const matchCat = cat === "全部 All" || p.cat === cat;
     const q = search.toLowerCase();
     const matchSearch = !q || p.name.includes(q) || p.en.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.cat.includes(q);
@@ -197,6 +214,8 @@ export default function App() {
         .wa-float:hover{transform:scale(1.1);box-shadow:0 8px 28px rgba(37,211,102,0.45);}
         @keyframes pulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,0.35);}50%{box-shadow:0 4px 28px rgba(37,211,102,0.6);}}
         .wa-float{animation:pulse 2.5s ease infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        .spinner{width:40px;height:40px;border:3px solid #ede8e0;border-top-color:#c8956c;border-radius:50%;animation:spin 0.8s linear infinite;margin:80px auto;}
       `}</style>
 
       {/* Nav */}
@@ -220,7 +239,7 @@ export default function App() {
           </div>
           <nav style={{ display: "flex", gap: "32px", alignItems: "center" }}>
             {["首页 Home","商品 Shop","关于我们 About","联系 Contact"].map(l => (
-              <a key={l} href="#" style={{ fontFamily: SAN, fontSize: "12px", color: "#7a6858", textDecoration: "none", transition: "color 0.2s" }}
+              <a key={l} href="#" style={{ fontFamily: SAN, fontSize: "12px", color: "#7a6858", textDecoration: "none" }}
                 onMouseEnter={e=>e.target.style.color="#c8956c"}
                 onMouseLeave={e=>e.target.style.color="#7a6858"}
               >{l}</a>
@@ -307,7 +326,9 @@ export default function App() {
             <h2 style={{ fontFamily: SER, fontSize: "28px", fontWeight: 700, color: "#2a1f18" }}>
               所有商品 <span style={{ fontStyle: "italic", color: "#c8956c" }}>All Products</span>
             </h2>
-            <p style={{ fontFamily: SAN, fontSize: "12px", color: "#a09080", marginTop: "4px" }}>共 {filtered.length} 件商品 · WhatsApp 询问下单</p>
+            <p style={{ fontFamily: SAN, fontSize: "12px", color: "#a09080", marginTop: "4px" }}>
+              共 {filtered.length} 件商品 · WhatsApp 询问下单
+            </p>
           </div>
           <div style={{ position: "relative" }}>
             <svg style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c0b0a0" strokeWidth="2">
@@ -316,12 +337,20 @@ export default function App() {
             <input className="search-box" placeholder="搜索商品..." value={search} onChange={e=>setSearch(e.target.value)}/>
           </div>
         </div>
+
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "36px" }}>
-          {CATS.map(c => (
+          {cats.map(c => (
             <button key={c} className={`cat-pill ${cat===c?"active":""}`} onClick={()=>setCat(c)}>{c}</button>
           ))}
         </div>
-        {filtered.length > 0 ? (
+
+        {loading ? (
+          <div className="spinner"/>
+        ) : error ? (
+          <div style={{ textAlign: "center", padding: "80px 0" }}>
+            <p style={{ fontFamily: SAN, fontSize: "14px", color: "#c8956c" }}>⚠️ 商品加载失败，请刷新重试</p>
+          </div>
+        ) : filtered.length > 0 ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: "20px" }}>
             {filtered.map((p,i) => <ProductCard key={p.id} p={p} idx={i}/>)}
           </div>
@@ -376,7 +405,6 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Float WhatsApp */}
       <button className="wa-float" onClick={() => openWhatsApp("一般询问","—")} title="WhatsApp Us">
         <WhatsAppIcon size={28} color="#fff"/>
       </button>
