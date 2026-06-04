@@ -7,7 +7,7 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?for
 
 const openWhatsApp = (productName, productCode) => {
   const msg = encodeURIComponent(
-    `Hi! I'm interested in the following item from HUEPAN:\n\n🛍️ ${productName} (${productCode})\n\nIs it available? Thank you!`
+    `Hi! I'm interested in the following item from HuePan:\n\n🛍️ ${productName} (${productCode})\n\nIs it available? Thank you!`
   );
   window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, "_blank");
 };
@@ -321,7 +321,7 @@ export default function App() {
     <header style={{ position:"sticky", top:0, zIndex:100, height:"64px", background:scrolled?"rgba(255,255,255,0.96)":"#fff", borderBottom:"1px solid #eee", backdropFilter:"blur(12px)", boxShadow:scrolled?"0 1px 16px rgba(0,0,0,0.07)":"none", transition:"all 0.3s" }}>
       <div style={{ maxWidth:"1200px", margin:"0 auto", padding:"0 32px", height:"100%", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div onClick={()=>setDetail(null)} style={{ cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"flex-start", gap:"0px" }}>
-          <span style={{ fontFamily:SER, fontSize:"24px", fontWeight:800, background:"linear-gradient(135deg,#FF6B6B 0%,#4ECDC4 35%,#9B5DE5 70%,#F7B731 100%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:"-1px" }}>HUEPAN</span>
+          <span style={{ fontFamily:SER, fontSize:"24px", fontWeight:800, background:"linear-gradient(135deg,#FF6B6B 0%,#4ECDC4 35%,#9B5DE5 70%,#F7B731 100%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:"-1px" }}>HuePan</span>
           <span style={{ fontFamily:SAN, fontSize:"9px", fontWeight:700, color:"#FF6B6B", letterSpacing:"3px", marginTop:"-2px" }}>VIBRANT LIVING</span>
         </div>
         <nav style={{ display:"flex", gap:"28px", alignItems:"center" }}>
@@ -394,7 +394,7 @@ export default function App() {
 
             <div className="fade-up" style={{ animationDelay:"0.1s" }}>
               <h1 style={{ fontFamily:SER, fontSize:"clamp(68px,11vw,128px)", fontWeight:700, background:"linear-gradient(135deg,#2A9D8F 0%,#5E60CE 35%,#9B5DE5 65%,#E76F51 100%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", lineHeight:0.92, letterSpacing:"-4.5px", marginBottom:"8px" }}>
-                HUEPAN
+                HuePan
               </h1>
               <p style={{ fontFamily:SAN, fontSize:"clamp(13px,2vw,16px)", fontWeight:500, color:"#2A9D8F", letterSpacing:"4px", marginBottom:"42px" }}>Color Your Everyday</p>
             </div>
@@ -443,11 +443,11 @@ export default function App() {
             </div>
           </section>
 
-          {/* Why HUEPAN - Vibrant & Grand Benefits */}
+          {/* Why HuePan - Vibrant & Grand Benefits */}
           <section style={{ background:"linear-gradient(180deg,#fff 0%,#fff7f5 100%)", padding:"64px 32px", borderBottom:"1px solid #f0e9e2" }}>
             <div style={{ maxWidth:"1200px", margin:"0 auto" }}>
               <div style={{ textAlign:"center", marginBottom:"40px" }}>
-                <p style={{ fontFamily:SAN, fontSize:"11px", letterSpacing:"4px", color:"#FF6B6B", fontWeight:700, marginBottom:"8px" }}>THE HUEPAN DIFFERENCE</p>
+                <p style={{ fontFamily:SAN, fontSize:"11px", letterSpacing:"4px", color:"#FF6B6B", fontWeight:700, marginBottom:"8px" }}>THE HuePan DIFFERENCE</p>
                 <h2 style={{ fontFamily:SER, fontSize:"28px", fontWeight:700, color:"#1a1a1a", marginBottom:"12px" }}>Why Shop Vibrant with Us</h2>
                 <p style={{ fontFamily:SAN, fontSize:"14px", color:"#666", maxWidth:"520px", margin:"0 auto" }}>Boldly curated. Thoughtfully sourced. Designed for those who live in color.</p>
               </div>
@@ -541,7 +541,7 @@ export default function App() {
             <div style={{ maxWidth:"1200px", margin:"0 auto", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:"16px" }}>
               <div>
                 <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:"0px" }}>
-                  <span style={{ fontFamily:SER, fontSize:"18px", fontWeight:800, background:"linear-gradient(135deg,#FF6B6B 0%,#4ECDC4 35%,#9B5DE5 70%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:"-0.5px" }}>HUEPAN</span>
+                  <span style={{ fontFamily:SER, fontSize:"18px", fontWeight:800, background:"linear-gradient(135deg,#FF6B6B 0%,#4ECDC4 35%,#9B5DE5 70%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:"-0.5px" }}>HuePan</span>
                   <span style={{ fontFamily:SAN, fontSize:"8px", fontWeight:700, color:"#FF6B6B", letterSpacing:"2.5px", marginTop:"-1px" }}>VIBRANT LIVING</span>
                 </div>
                 <div style={{ fontFamily:SAN, fontSize:"10px", color:"#666", marginTop:"6px", letterSpacing:"1px" }}>CURATED ESSENTIALS • WORLDWIDE</div>
@@ -551,7 +551,7 @@ export default function App() {
                   <a key={l} href="#" style={{ fontFamily:SAN, fontSize:"11px", color:"#555", textDecoration:"none", fontWeight:600, letterSpacing:"1px" }}>{l}</a>
                 ))}
               </div>
-              <p style={{ fontFamily:SAN, fontSize:"10px", color:"#444" }}>© 2024 HUEPAN. All rights reserved.</p>
+              <p style={{ fontFamily:SAN, fontSize:"10px", color:"#444" }}>© 2024 HuePan. All rights reserved.</p>
             </div>
           </footer>
         </>
