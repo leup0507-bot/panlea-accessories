@@ -396,7 +396,7 @@ export default function App() {
               <h1 style={{ fontFamily:SER, fontSize:"clamp(68px,11vw,128px)", fontWeight:700, background:"linear-gradient(135deg,#2A9D8F 0%,#5E60CE 35%,#9B5DE5 65%,#E76F51 100%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", lineHeight:0.92, letterSpacing:"-4.5px", marginBottom:"8px" }}>
                 HUEPAN
               </h1>
-              <p style={{ fontFamily:SAN, fontSize:"clamp(12px,2vw,15px)", fontWeight:600, color:"#E76F51", letterSpacing:"6px", marginBottom:"40px", textTransform:"uppercase" }}>VIBRANT • CURATED • EVERYDAY</p>
+              <p style={{ fontFamily:SAN, fontSize:"clamp(13px,2vw,16px)", fontWeight:500, color:"#2A9D8F", letterSpacing:"4px", marginBottom:"42px" }}>Color Your Everyday</p>
             </div>
 
             <div className="fade-up" style={{ animationDelay:"0.35s", display:"flex", gap:"12px", justifyContent:"center", flexWrap:"wrap" }}>
