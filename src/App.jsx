@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const WA_NUMBER = "601XXXXXXXX";
+const WA_NUMBER = "18157970409";
 const SHEET_ID = "1MSwdIxakWwu7G6GbRjjJsUx5UNOnCxrAWYmXGTkdP_Y";
 // Use CSV export URL for better compatibility
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
