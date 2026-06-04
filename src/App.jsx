@@ -12,8 +12,8 @@ const openWhatsApp = (productName, productCode) => {
   window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, "_blank");
 };
 
-const SAN = "'PingFang SC','Microsoft YaHei','Helvetica Neue',Arial,sans-serif";
-const SER = "Georgia,'Times New Roman',serif";
+const SAN = "'Inter', 'PingFang SC', 'Helvetica Neue', system-ui, -apple-system, Arial, sans-serif";
+const SER = "'Playfair Display', Georgia, 'Times New Roman', serif";
 
 // New broader categories for general merchandise
 const CAT_EN = {
@@ -307,7 +307,7 @@ export default function App() {
 
   const allCatLabels = ["All",...Object.keys(CAT_CONFIG)];
   const usedCats = new Set(products.map(p=>getCatEn(p)));
-  const catLabels = ["All",...Object.keys(CAT_CONFIG).filter(c=>usedCats.has(c))];
+  const catLabels = ["All", ...Object.keys(CAT_CONFIG).filter(c => usedCats.has(c))];
 
   const filtered = products.filter(p=>{
     const pCatEn = getCatEn(p);
@@ -385,7 +385,7 @@ export default function App() {
           </div>
 
           {/* Hero */}
-          <section style={{ background:"linear-gradient(160deg,#fff 0%,#faf8f5 60%,#f5f0eb 100%)", borderBottom:"1px solid #eee", padding:"88px 32px 80px", textAlign:"center", position:"relative", overflow:"hidden" }}>
+          <section style={{ background:"linear-gradient(160deg,#fff 0%,#faf8f5 60%,#f5f0eb 100%)", borderBottom:"1px solid #f0e9e2", padding:"100px 32px 90px", textAlign:"center", position:"relative", overflow:"hidden" }}>
             {/* Background blobs - vibrant */}
             <div style={{ position:"absolute", top:"-120px", left:"-80px", width:"420px", height:"420px", borderRadius:"50%", background:"radial-gradient(circle,#FF6B6B12,transparent 75%)", pointerEvents:"none" }}/>
             <div style={{ position:"absolute", bottom:"-100px", right:"-60px", width:"380px", height:"380px", borderRadius:"50%", background:"radial-gradient(circle,#4ECDC412,transparent 75%)", pointerEvents:"none" }}/>
@@ -393,10 +393,10 @@ export default function App() {
             <div style={{ position:"absolute", top:"25%", right:"8%", width:"200px", height:"200px", borderRadius:"50%", background:"radial-gradient(circle,#F7B73112,transparent 70%)", pointerEvents:"none" }}/>
 
             <div className="fade-up" style={{ animationDelay:"0.1s" }}>
-              <h1 style={{ fontFamily:SER, fontSize:"clamp(72px,12vw,140px)", fontWeight:800, background:"linear-gradient(135deg,#FF6B6B 0%,#4ECDC4 30%,#9B5DE5 65%,#F7B731 100%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", lineHeight:0.9, letterSpacing:"-5px", marginBottom:"4px" }}>
+              <h1 style={{ fontFamily:SER, fontSize:"clamp(68px,11vw,128px)", fontWeight:700, background:"linear-gradient(135deg,#2A9D8F 0%,#5E60CE 35%,#9B5DE5 65%,#E76F51 100%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", lineHeight:0.92, letterSpacing:"-4.5px", marginBottom:"8px" }}>
                 HUEPAN
               </h1>
-              <p style={{ fontFamily:SAN, fontSize:"clamp(13px,2.2vw,18px)", fontWeight:700, color:"#FF6B6B", letterSpacing:"8px", marginBottom:"32px", textTransform:"uppercase" }}>VIBRANT • CURATED • EVERYDAY</p>
+              <p style={{ fontFamily:SAN, fontSize:"clamp(12px,2vw,15px)", fontWeight:600, color:"#E76F51", letterSpacing:"6px", marginBottom:"40px", textTransform:"uppercase" }}>VIBRANT • CURATED • EVERYDAY</p>
             </div>
 
             <div className="fade-up" style={{ animationDelay:"0.35s", display:"flex", gap:"12px", justifyContent:"center", flexWrap:"wrap" }}>
